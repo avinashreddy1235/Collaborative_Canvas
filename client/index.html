@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative Canvas - Real-time Drawing</title>
+    <meta name="description" content="Multi-user collaborative drawing canvas with real-time synchronization">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Landing / Room Selection Screen -->
+    <div id="landing-screen" class="screen active">
+        <div class="landing-container">
+            <div class="logo-section">
+                <div class="logo-icon">🎨</div>
+                <h1>Collaborative Canvas</h1>
+                <p class="tagline">Draw together in real-time</p>
+            </div>
+
+            <div class="join-section">
+                <div class="input-group">
+                    <label for="username-input">Your Name</label>
+                    <input type="text" id="username-input" placeholder="Enter your name" maxlength="20">
+                </div>
+
+                <div class="room-options">
+                    <div class="option-card" id="create-room-card">
+                        <div class="option-icon">✨</div>
+                        <h3>Create Room</h3>
+                        <p>Start a new canvas</p>
+                        <button id="create-room-btn" class="btn btn-primary">Create</button>
+                    </div>
+
+                    <div class="option-card" id="join-room-card">
+                        <div class="option-icon">🔗</div>
+                        <h3>Join Room</h3>
+                        <p>Enter room code</p>
+                        <input type="text" id="room-code-input" placeholder="Room code" maxlength="8">
+                        <button id="join-room-btn" class="btn btn-secondary">Join</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Rooms List -->
+            <div class="active-rooms" id="active-rooms-section" style="display: none;">
+                <h3>Active Rooms</h3>
+                <div id="rooms-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Canvas Screen -->
+    <div id="canvas-screen" class="screen">
+        <!-- Header Bar -->
+        <header class="header-bar">
+            <div class="header-left">
+                <button id="leave-room-btn" class="btn-icon" title="Leave Room">
+                    <span>←</span>
+                </button>
+                <div class="room-info">
+                    <span class="room-label">Room:</span>
+                    <span id="room-id-display" class="room-code"></span>
+                    <button id="copy-room-btn" class="btn-icon-small" title="Copy Room Code">📋</button>
+                </div>
+            </div>
+            <div class="header-center">
+                <span class="app-title">Collaborative Canvas</span>
+            </div>
+            <div class="header-right">
+                <div class="connection-status" id="connection-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Connected</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Left Toolbar -->
+            <aside class="toolbar">
+                <div class="tool-section">
+                    <h4>Tools</h4>
+                    <div class="tool-buttons">
+                        <button class="tool-btn active" data-tool="brush" title="Brush">
+                            <span class="tool-icon">🖌️</span>
+                        </button>
+                        <button class="tool-btn" data-tool="eraser" title="Eraser">
+                            <span class="tool-icon">🧹</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <h4>Color</h4>
+                    <div class="color-picker-container">
+                        <input type="color" id="color-picker" value="#000000">
+                        <div class="color-presets">
+                            <button class="color-preset" data-color="#000000" style="background: #000000;"></button>
+                            <button class="color-preset" data-color="#FF6B6B" style="background: #FF6B6B;"></button>
+                            <button class="color-preset" data-color="#4ECDC4" style="background: #4ECDC4;"></button>
+                            <button class="color-preset" data-color="#45B7D1" style="background: #45B7D1;"></button>
+                            <button class="color-preset" data-color="#96CEB4" style="background: #96CEB4;"></button>
+                            <button class="color-preset" data-color="#FFEAA7" style="background: #FFEAA7;"></button>
+                            <button class="color-preset" data-color="#DDA0DD" style="background: #DDA0DD;"></button>
+                            <button class="color-preset" data-color="#FFFFFF"
+                                style="background: #FFFFFF; border: 1px solid #333;"></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <h4>Size: <span id="size-value">5</span>px</h4>
+                    <input type="range" id="stroke-width" min="1" max="50" value="5">
+                </div>
+
+                <div class="tool-section">
+                    <h4>Actions</h4>
+                    <div class="action-buttons">
+                        <button id="undo-btn" class="action-btn" title="Undo (Ctrl+Z)">
+                            ↶ Undo
+                        </button>
+                        <button id="redo-btn" class="action-btn" title="Redo (Ctrl+Y)">
+                            ↷ Redo
+                        </button>
+                        <button id="clear-btn" class="action-btn action-btn-danger" title="Clear Canvas">
+                            🗑️ Clear
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Canvas Container -->
+            <main class="canvas-container">
+                <canvas id="drawing-canvas"></canvas>
+                <!-- Remote cursors will be rendered here -->
+                <div id="cursors-container"></div>
+            </main>
+
+            <!-- Right Sidebar - Users -->
+            <aside class="users-sidebar">
+                <div class="sidebar-header">
+                    <h4>Online Users</h4>
+                    <span id="user-count" class="user-count">0</span>
+                </div>
+                <ul id="users-list" class="users-list"></ul>
+
+                <!-- Performance Metrics Panel -->
+                <div class="metrics-panel">
+                    <div class="sidebar-header">
+                        <h4>📊 Metrics</h4>
+                    </div>
+                    <div class="metrics-list">
+                        <div class="metric-item">
+                            <span class="metric-label">Latency</span>
+                            <span id="metric-latency" class="metric-value">-- ms</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Strokes</span>
+                            <span id="metric-strokes" class="metric-value">0</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Uptime</span>
+                            <span id="metric-uptime" class="metric-value">--</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="canvas.js"></script>
+    <script src="websocket.js"></script>
+    <script src="main.js"></script>
+</body>
+
+</html>
