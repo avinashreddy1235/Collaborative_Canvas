@@ -4,10 +4,9 @@
  */
 
 const CONFIG = {
-    // Backend URL - change this to your Render backend URL after deployment
-    // For local development, leave as empty string to use same origin
-    // For production, set to your Render backend URL like: 'https://your-app.onrender.com'
-    BACKEND_URL: '',
+    // Backend URL - Render backend for production
+    // For local development, change to empty string ''
+    BACKEND_URL: 'https://collaborative-canvas-backend-5yia.onrender.com',
 
     // API endpoints (relative to BACKEND_URL)
     API: {
